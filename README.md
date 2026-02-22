@@ -13,6 +13,18 @@ This proxy directly solves these issues by:
 3. **SSE Streaming Support**: Emulates OpenAI and Anthropic Server-Sent Events identically, meaning words type out in real-time in your client exactly as they do on the Z.ai website.
 4. **Reasoning Stream Extraction**: Z.ai models provide native `<details type="reasoning">` thinking streams. This proxy correctly parses and streams these thought processes out so compatible clients render them seamlessly before the final response.
 
+## ⚙️ How it Works
+
+The proxy acts as a bridge between standard AI clients and Z.ai's web-based API. Here's a technical breakdown:
+
+- **Request Transformation**: When you send a request to `/v1/chat/completions`, the proxy transforms the OpenAI-formatted payload into the Z.ai internal JSON format.
+- **Signature Algorithm**: Z.ai requires a complex HMAC-SHA256 signature (`x-signature`). The proxy calculates this by:
+    1. Generating a 5-minute windowed HMAC key using a fixed internal salt.
+    2. Sorting and flattening key request parameters (timestamp, request ID, user ID).
+    3. Hashing the flattened metadata along with the base64-encoded user message.
+- **Session Impersonation**: Using `curl_cffi`, the proxy impersonates a real Chrome browser instance (TLS fingerprints, headers, etc.) to avoid detection by automated bot-protection systems.
+- **Stream Buffering**: It maintains a persistent connection to Z.ai's SSE stream, re-mapping custom Z.ai events into standard `chat.completion.chunk` events.
+
 ## 📦 Features
 
 - **OpenAI Compatible Endpoint**: `/v1/chat/completions`
@@ -28,8 +40,23 @@ This proxy directly solves these issues by:
 
 To route traffic successfully, the proxy acts on behalf of your active Z.ai web session. You need to extract two values from your browser after logging into `chat.z.ai`:
 
-- **`JWT_TOKEN`**: Found in your browser's local storage or application tab as the bearer authentication token.
-- **`COOKIE`**: The full raw cookie string passed in the network request headers to `https://chat.z.ai/api/v2/chat/completions`.
+#### Steps to get `JWT_TOKEN` and `COOKIE`
+
+1. **Login**: Go to [chat.z.ai](https://chat.z.ai) and log in to your account.
+2. **Open Developer Tools**: Press `F12` (or `Right Click > Inspect`) and go to the **Network** tab.
+3. **Find a Chat Request**: Start a new chat or send a message. Look for a request named `completions` (or similar under `chat/completions`).
+4. **Extract JWT**:
+    - Click on the request.
+    - Go to the **Headers** tab.
+    - Look for `authorization: Bearer <YOUR_TOKEN>`.
+    - Copy everything *after* `Bearer`. This is your `JWT_TOKEN`.
+5. **Extract Cookie**:
+    - In the same **Headers** tab, look for the `Cookie` header.
+    - Copy the *entire* value string. This is your `COOKIE`.
+6. **(Optional) Alternative JWT Location**:
+    - Go to the **Application** tab (in DevTools).
+    - Under **Storage**, click on **Local Storage** > `https://chat.z.ai`.
+    - Look for a key like `zai-user-token` or similar (though the Network tab method is more reliable).
 
 Create a `.env` file in the root directory and add the credentials:
 
@@ -108,3 +135,15 @@ curl -X POST http://localhost:8000/v1/messages \
 
 - **Tool Calling**: The proxy parses standard `tools` and `tool_choice` arrays from incoming requests and passes them up to Z.ai. However, native JSON tool execution (actually returning a standard `tool_calls` object) is *experimental/unstable* as Z.ai's internal web SSE format expects different custom UI triggers. It's highly recommended to utilize a system-prompt (ReAct) wrapper utilizing standard string outputs when combining this proxy with tools.
 - **Rate Limits**: The proxy is bound by whatever rate limits are applied to your specific Z.ai account tier.
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the `LICENSE` file for details (or just know it's open for use and modification).
+
+## 🤝 Contributing
+
+Contributions are welcome! If you find a bug or have a feature suggestion, please open an issue or submit a pull request. Make sure to follow the existing code style and provide clear descriptions of your changes.
+
+---
+
+*Disclaimer: This project is for educational and personal use only. Use at your own risk. Respect Z.ai's Terms of Service.*
