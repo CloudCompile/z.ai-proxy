@@ -6,7 +6,7 @@ import base64
 import hmac
 import hashlib
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, HTMLResponse
 from curl_cffi.requests import AsyncSession
 from dotenv import load_dotenv
 
@@ -143,6 +143,236 @@ def generate_zai_request(messages, is_stream: bool, tools: list = None, tool_cho
         payload["tool_choice"] = tool_choice
         
     return full_url, headers, payload
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Z.ai Proxy API</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --bg: #0f172a;
+                --card-bg: #1e293b;
+                --text: #f8fafc;
+                --text-muted: #94a3b8;
+                --accent: #22d3ee;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: 'Outfit', sans-serif;
+                background-color: var(--bg);
+                color: var(--text);
+                line-height: 1.6;
+                overflow-x: hidden;
+            }
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 4rem 2rem;
+            }
+            header {
+                text-align: center;
+                margin-bottom: 4rem;
+                animation: fadeInDown 0.8s ease-out;
+            }
+            h1 {
+                font-size: 3.5rem;
+                font-weight: 700;
+                margin-bottom: 1rem;
+                background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+            .subtitle {
+                font-size: 1.25rem;
+                color: var(--text-muted);
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+                margin-bottom: 4rem;
+            }
+            .card {
+                background: var(--card-bg);
+                padding: 2rem;
+                border-radius: 1.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+                animation: fadeInUp 0.8s ease-out backwards;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+                border-color: var(--primary);
+                box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3);
+            }
+            .card h2 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                color: var(--accent);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .card p {
+                color: var(--text-muted);
+            }
+            .endpoints {
+                background: rgba(0, 0, 0, 0.3);
+                padding: 2rem;
+                border-radius: 1.5rem;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                margin-bottom: 4rem;
+                animation: fadeIn 1s ease-out;
+            }
+            .endpoints h2 {
+                margin-bottom: 1.5rem;
+                text-align: center;
+            }
+            code {
+                background: #000;
+                padding: 0.2rem 0.5rem;
+                border-radius: 0.4rem;
+                color: var(--accent);
+                font-family: monospace;
+            }
+            .endpoint-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .endpoint-item:last-child {
+                border-bottom: none;
+            }
+            .badge {
+                padding: 0.25rem 0.75rem;
+                border-radius: 1rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                background: var(--primary);
+            }
+            footer {
+                text-align: center;
+                color: var(--text-muted);
+                padding: 2rem 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            @keyframes fadeInDown {
+                from { opacity: 0; transform: translateY(-30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .shine {
+                position: relative;
+                overflow: hidden;
+            }
+            .shine::after {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(
+                    to bottom right,
+                    rgba(255,255,255,0) 0%,
+                    rgba(255,255,255,0) 40%,
+                    rgba(255,255,255,0.1) 50%,
+                    rgba(255,255,255,0) 60%,
+                    rgba(255,255,255,0) 100%
+                );
+                transform: rotate(45deg);
+                transition: all 0.5s;
+                opacity: 0;
+            }
+            .card:hover .shine::after {
+                opacity: 1;
+                left: 100%;
+                top: 100%;
+                transition: all 0.7s;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Z.ai Proxy</h1>
+                <p class="subtitle">A high-performance bridge converting Z.ai intelligence into OpenAI and Anthropic compatible formats. Built for developers, by developers.</p>
+            </header>
+
+            <div class="grid">
+                <div class="card shine" style="animation-delay: 0.1s">
+                    <h2>🚀 Dual Compatibility</h2>
+                    <p>Native support for both <code>OpenAI v1</code> and <code>Anthropic v1</code> message formats. Use your favorite SDKs without changing a line of code.</p>
+                </div>
+                <div class="card shine" style="animation-delay: 0.2s">
+                    <h2>🛡️ Signature Engine</h2>
+                    <p>Automated request signing and JWT payload management. We handle the complex Z.ai security handshake so you don't have to.</p>
+                </div>
+                <div class="card shine" style="animation-delay: 0.3s">
+                    <h2>⚡ Real-time Streaming</h2>
+                    <p>Support for Server-Sent Events (SSE). Experience the speed of <code>glm-5</code> with ultra-low latency token-by-token generation.</p>
+                </div>
+            </div>
+
+            <div class="endpoints">
+                <h2>API Endpoints</h2>
+                <div class="endpoint-item">
+                    <div>
+                        <strong>OpenAI Chat</strong><br>
+                        <code>POST /v1/chat/completions</code>
+                    </div>
+                    <span class="badge">Active</span>
+                </div>
+                <div class="endpoint-item">
+                    <div>
+                        <strong>Anthropic Messages</strong><br>
+                        <code>POST /v1/messages</code>
+                    </div>
+                    <span class="badge">Active</span>
+                </div>
+                <div class="endpoint-item">
+                    <div>
+                        <strong>Model List</strong><br>
+                        <code>GET /v1/models</code>
+                    </div>
+                    <span class="badge">Active</span>
+                </div>
+            </div>
+
+            <footer>
+                <p>&copy; 2024 Z.ai Proxy API. All models served via secure upstream proxy.</p>
+            </footer>
+        </div>
+    </body>
+    </html>
+    """
 
 @app.post("/v1/chat/completions")
 async def openai_proxy(request: Request):
