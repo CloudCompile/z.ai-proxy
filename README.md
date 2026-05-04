@@ -67,7 +67,22 @@ COOKIE="__stripe_mid=..."
 
 *(Note: These credentials represent your account. Do not share them or expose them publicly!)*
 
-### 2. Deploy via Docker (Recommended for VPS)
+### 2. Deploy on Vercel (Recommended for Serverless)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/CloudCompile/z.ai-proxy)
+
+1. **Fork / clone** this repository and import it in the [Vercel dashboard](https://vercel.com/new).
+2. During import, add your environment variables:
+   - `JWT_TOKEN` – your Z.ai JWT (see step 1 above)
+   - `COOKIE` – your full Z.ai cookie string
+3. Click **Deploy**. Vercel will detect the `vercel.json` configuration and deploy the FastAPI app automatically.
+
+> **Note**: Long streaming responses may hit Vercel's function timeout (10 s on Hobby, 60 s on Pro). For heavy streaming usage, consider the Docker deployment or upgrading to a Pro plan and adding `"maxDuration": 60` inside the build's `config` block in `vercel.json`:
+> ```json
+> { "src": "main.py", "use": "@vercel/python", "config": { "maxDuration": 60 } }
+> ```
+
+### 3. Deploy via Docker (Recommended for VPS)
 
 The provided `Dockerfile` leverages a lightweight Python 3.11 environment.
 
@@ -79,7 +94,7 @@ docker build -t zai-proxy .
 docker run -d -p 8000:8000 --env-file .env --name zai-proxy zai-proxy
 ```
 
-### 3. Run Locally (Python Environment)
+### 4. Run Locally (Python Environment)
 
 If you prefer running it directly on your host machine:
 
