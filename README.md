@@ -77,7 +77,10 @@ COOKIE="__stripe_mid=..."
    - `COOKIE` – your full Z.ai cookie string
 3. Click **Deploy**. Vercel will detect the `vercel.json` configuration and deploy the FastAPI app automatically.
 
-> **Note**: Long streaming responses may hit Vercel's function timeout (10 s on Hobby, 60 s on Pro). For heavy streaming usage, consider the Docker deployment or upgrading to a Pro plan and adding `"maxDuration": 60` to the function config in `vercel.json`.
+> **Note**: Long streaming responses may hit Vercel's function timeout (10 s on Hobby, 60 s on Pro). For heavy streaming usage, consider the Docker deployment or upgrading to a Pro plan and adding `"maxDuration": 60` inside the build's `config` block in `vercel.json`:
+> ```json
+> { "src": "main.py", "use": "@vercel/python", "config": { "maxDuration": 60 } }
+> ```
 
 ### 3. Deploy via Docker (Recommended for VPS)
 
